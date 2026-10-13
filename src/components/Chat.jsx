@@ -78,13 +78,13 @@ export default function Chat({ open, setOpen, request }) {
 
     abortRef.current = new AbortController()
     try {
-      const { mode, sources } = await askAssistant({
+      const { mode, sources, fallbackReason } = await askAssistant({
         question,
         history,
         signal: abortRef.current.signal,
         onToken: (t) => appendToLast((msg) => ({ ...msg, content: msg.content + t, pending: false })),
       })
-      appendToLast((msg) => ({ ...msg, pending: false, mode, sources: sources.map((s) => s.title) }))
+      appendToLast((msg) => ({ ...msg, pending: false, mode, fallbackReason, sources: sources.map((s) => s.title) }))
     } catch (err) {
       if (err.name !== 'AbortError') {
         appendToLast((msg) => ({ ...msg, pending: false, content: 'Sorry, something went wrong. Please try again.' }))
@@ -113,7 +113,7 @@ export default function Chat({ open, setOpen, request }) {
               <div className="font-semibold text-white">Monica's AI Assistant</div>
               <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
                 <span className={`h-1.5 w-1.5 rounded-full ${live ? 'bg-accent-mint' : 'bg-accent-amber'}`} />
-                {live ? 'Live · RAG + Llama 3.3 on Groq' : 'Offline mode · answers from profile search'}
+                {live ? 'Live · RAG + LLM on Groq' : 'Offline mode · answers from profile search'}
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="sim-btn" aria-label="Close assistant">
@@ -146,6 +146,9 @@ export default function Chat({ open, setOpen, request }) {
                     <div className="mt-2 border-t border-ink-700 pt-2 text-[10px] text-slate-500">
                       Sources: {m.sources.join(' · ')}
                     </div>
+                  )}
+                  {m.fallbackReason && (
+                    <div className="mt-1 text-[10px] text-accent-amber">Live AI unavailable ({m.fallbackReason}), showing profile excerpts.</div>
                   )}
                 </div>
               </div>
